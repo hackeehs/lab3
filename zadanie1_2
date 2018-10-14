@@ -1,0 +1,210 @@
+import pygame
+from pygame.locals import *
+import random as r
+import time
+
+size = 20
+
+finished = False
+grid = [[0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 ],
+        [1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1 ],
+        [1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0 ],
+        [1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1 ],
+        [1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1 ],
+        [1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1 ],
+        [1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1 ],
+        [1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1 ],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0 ],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0 ],
+        [1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0 ],
+        [1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1 ],
+        [1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1 ],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1 ],
+        [1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1 ],
+        [1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1 ],
+        [1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0 ],
+        [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0 ],
+        [1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]]
+
+resolution = (800, 800)
+cell_margin = 14
+cell_colors = (255, 255, 255), (0, 0, 0)
+player_character = "O"
+player_color = (25, 187, 190)
+player_size = 45
+
+print(len(grid))
+
+def init():
+  global t0
+  t0 = time.clock()
+  x = r.randint(0, size)
+  y = r.randint(0, size)
+
+
+  xfin = r.randint(0, size)
+  yfin = r.randint(0, size)
+
+  while (not grid[yfin][xfin] == 1):
+    xfin = r.randint(0, size)
+    yfin = r.randint(0, size)
+
+  while (not grid[y][x] == 1):
+    x = r.randint(0, size)
+    y = r.randint(0, size)
+
+  global PlayAgain
+  PlayAgain = False
+
+  global start_position
+  start_position = (x, y)
+  global finish_position
+  finish_position = (xfin, yfin)
+  global current_position
+  current_position = [x, y]
+
+  global stepsCounter
+  stepsCounter = 0
+
+def main():
+    init()
+    playAgain = False
+    pygame.init()
+    screen = pygame.display.set_mode(resolution)
+    screen.fill(cell_colors[1])
+    player = pygame.font.Font(None, player_size).render(player_character, False, player_color)
+    while not isFinished():
+        for event in pygame.event.get():
+            if event.type == KEYDOWN:
+                key = event.key
+                if key == K_UP:
+                    move(0, -1)
+                elif key == K_RIGHT:
+                    move(1, 0)
+                elif key == K_DOWN:
+                    move(0, 1)
+                elif key == K_LEFT:
+                    move(-1, 0)
+                elif key == K_q:
+                    search(current_position[0], current_position[1])
+            elif event.type == QUIT:
+                return
+        draw_maze(screen)
+        draw_player(player, screen)
+        pygame.display.update()
+    finish(screen)
+
+def draw_maze(screen):
+    for row in range(len(grid)):
+        for column in range(len(grid[0])):
+            try:
+                screen.fill(cell_colors[grid[column][row]], get_cell_rect((row, column), screen))
+            except IndexError:
+                pass
+    screen.fill((255, 0, 0), get_cell_rect((start_position[0], start_position[1]), screen))
+    screen.fill((0, 255, 0), get_cell_rect((finish_position[0], finish_position[1]), screen))
+
+def get_cell_rect(coordinates, screen):
+    row, column = coordinates
+    cell_width = screen.get_width() / len(grid)
+    adjusted_width = cell_width - cell_margin
+    return pygame.Rect(row * cell_width + cell_margin / 2,
+                       column * cell_width + cell_margin / 2,
+                       adjusted_width, adjusted_width)
+
+def draw_player(player, screen):
+    rect = player.get_rect()
+    rect.center = get_cell_rect(current_position, screen).center
+    screen.blit(player, rect)
+
+def move(dx, dy):
+    global stepsCounter, current_position
+    x, y = current_position
+    nx, ny = x + dx, y + dy
+    if nx >= 0 and nx < len(grid) and ny >= 0 and ny < len(grid[0]) and grid[ny][nx]:
+        current_position[0] = nx
+        current_position[1] = ny
+        stepsCounter += 1
+
+def finish(screen):
+    global stepsCounter, playAgain
+    pygame.init()
+    screen = pygame.display.set_mode((500, 500))
+    waitingText = pygame.font.Font(None, 30).render("You won! Congratulations!", False, (255, 255, 255))
+    timePassedText = pygame.font.Font(None, 30).render("Time spent: " + str(time.clock()-t0), False, (255, 255, 255))
+    stepsMadeText = pygame.font.Font(None, 30).render("Steps made: " + str(stepsCounter), False, (255, 255, 255))
+
+    exit = pygame.font.Font(None, 30).render("Exit", False, (255, 255, 255))
+    playAgain = pygame.font.Font(None, 30).render("Play again", False, (255, 255, 255))
+
+    start_button = pygame.draw.rect(screen,(25, 187, 190),(100,400,125,50));
+    quit_button = pygame.draw.rect(screen,(244,50,0),(275,400,100,50));
+
+
+    while True:
+          for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+              if pygame.mouse.get_pos()[0] >= 125 and pygame.mouse.get_pos()[1] >= 400:
+                if pygame.mouse.get_pos()[0] <= 225 and pygame.mouse.get_pos()[1] <= 450:
+                        main()
+                        return
+              if pygame.mouse.get_pos()[0] >= 275 and pygame.mouse.get_pos()[1] >= 400:
+                if pygame.mouse.get_pos()[0] <= 375 and pygame.mouse.get_pos()[1] <= 450:
+                        return
+            elif event.type == QUIT:
+                return
+
+
+          screen.blit(waitingText, (100, 100))
+          screen.blit(timePassedText, (100, 200))
+          screen.blit(stepsMadeText, (100, 300))
+          screen.blit(playAgain, (115, 420))
+          screen.blit(exit, (310, 420))
+
+          pygame.display.update()
+
+def isFinished():
+  if (current_position[0] == finish_position[0] and current_position[1] == finish_position[1] and time.clock()-t0 > 1 and not PlayAgain):
+      return True
+  return False
+
+
+def search(x, y):
+    global grid, current_position
+    grid = grid
+    current_position = current_position
+    if (x == finish_position[0] and y == finish_position[1]):
+        print ('found at %d,%d' % (x, y))
+        return True 
+    elif grid[x][y] == 0:
+        print ('wall at %d,%d' % (x, y))
+        return False
+    elif grid[x][y] == 3:
+        print ('visited at %d,%d' % (x, y))
+        return False
+    print ('visiting %d,%d' % (x, y))
+    time.sleep(0.001)
+    if (x != current_position[0] and y != current_position[1]):
+      move(x - current_position[0], y - current_position[1])
+      pygame.display.update()      
+      
+    # mark as visited
+    grid[x][y] = 3
+
+    # explore neighbors clockwise starting by the one on the right
+    if ((x < len(grid)-1 and search(x+1, y))
+        or (y > 0 and search(x, y-1))
+        or (x > 0 and search(x-1, y))
+        or (y < len(grid)-1 and search(x, y+1))):
+        return True
+
+    return False
+
+
+
+
+main()
+
+
+pygame.quit()
